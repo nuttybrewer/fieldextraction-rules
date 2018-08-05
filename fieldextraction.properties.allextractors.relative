@@ -1,0 +1,15 @@
+# This properties file should load "everything" defined in the proper order
+# Users should use this as a basis to load their own files/definitions as a starting point or example
+basepath=./
+morphlinepath=morphlines
+grokPatternDirectories = grokpatterns
+
+extractorClasses = com.secureops.fieldextraction.morphlines.MorphlinesFieldExtractorItemConfigLoader
+extractorClasses = com.secureops.fieldextraction.csv.CSVFieldExtractorItemConfigLoader
+extractorClasses = com.secureops.fieldextraction.grok.GrokFieldExtractorItemConfigLoader
+extractorType=tree
+breakOnError=true
+
+include=${basepath}/vendor/paloalto.properties
+include=${basepath}/vendor/juniper.properties
+include=${basepath}/vendor/unix.properties
