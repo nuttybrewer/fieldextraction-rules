@@ -1,8 +1,12 @@
 # This properties file should load "everything" defined in the proper order
-# Users should use this as a basis to load their own files/definitions as a starting point or example
-basepath=./
-morphlinepath=morphlines
-grokPatternDirectories = grokpatterns
+# Users *MUST* include this file from a file defining the ${basepath} variable
+
+# Here is an example of how this could be included from a local file
+# basepath=https://secureops.github.io/fieldextraction-rules
+# include=${basepath}/fieldextraction.properties.allextractors.relative
+
+morphlinepath=${basepath}/morphlines
+grokPatternDirectories = ${basepath}/grokpatterns
 
 extractorClasses = com.secureops.fieldextraction.morphlines.MorphlinesFieldExtractorItemConfigLoader
 extractorClasses = com.secureops.fieldextraction.csv.CSVFieldExtractorItemConfigLoader
