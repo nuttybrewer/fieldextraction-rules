@@ -2,7 +2,7 @@ morphlines : [
   {
     id : morphlines_paloalto_traffic
     importCommands : ["org.kitesdk.**"]
-    
+
     commands : [
 #      #{ logInfo { format : "input record paloalto: {}", args : ["@{}"] } }
 
@@ -12,10 +12,14 @@ morphlines : [
           dictionaryResources : [ "grokpatterns/grok-patterns" ]
           dictionaryString:  """
             TIMESTAMP (?:%{TIMESTAMP_ISO8601}|%{SYSLOGTIMESTAMP})
-            PALOALTO_TRAFFIC %{DATA},%{DATA},(?:TRAFFIC),%{GREEDYDATA}
+            SYSLOGBINHDR <[0-9]+>
+            SYSLOGPIDWITHDASH \[([0-9]+|-)\]
+            SYSLOGPROGWITHDASH %{PROG}%{SYSLOGPIDWITHDASH}
+            SYSLOGHDR (?:%{SYSLOGBINHDR})%{TIMESTAMP} %{SYSLOGHOST} %{SYSLOGPROGWITHDASH}:%{SPACE}
+            PALOALTO_TRAFFIC %{INT},%{DATA},%{DATA},(?:TRAFFIC),%{GREEDYDATA}
           """
           expressions : {
-            message : """^(?:<%{INT:priority}>)?%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:syslog_host} (%{INT},)?%{PALOALTO_TRAFFIC:paloalto_traffic}"""
+            message : """^(?:%{SYSLOGHDR})?%{PALOALTO_TRAFFIC:paloalto_traffic}"""
           }
         }
       }
@@ -24,16 +28,16 @@ morphlines : [
       {
         split {
           inputField : paloalto_traffic
-          outputFields : [ receive_time_ts, serial, type, subtype, FUTURE_USE1, time_generated_ts,src,dst,natsrc,natdst,rule,srcuser,dstuser,app,vsys,from,to,inbound_if,outbound_if,logset,FUTURE_USE2,sessionid,repeatcnt_i,src_port,dst_port,natsrc_port,natdst_port,flags,protocol,action,bytes_total,bytes_total_sent,bytes_total_received,packets_total,start_ts,elapsed,category,FUTURE_USE3,seqno_i,actionflags,srcloc,dstloc,FUTURE_USE4,packets_sent,packets_received ]
-          separator : ","        
-          isRegex : false      
+          outputFields : [ FUTURE_USE0, receive_time_ts, serial, type, subtype, FUTURE_USE1, time_generated_ts, src, dst, natsrc, natdst, rule,srcuser,dstuser,app,vsys,from,to,inbound_if,outbound_if,logset,FUTURE_USE2,sessionid,repeatcnt_i,src_port,dst_port,natsrc_port,natdst_port,flags,protocol,action,bytes_total,bytes_total_sent,bytes_total_received,packets_total,start_ts,elapsed,category,FUTURE_USE3,seqno_i,actionflags,srcloc,dstloc,FUTURE_USE4,packets_sent,packets_received ]
+          separator : ","
+          isRegex : false
           addEmptyStrings : true
-          trim : true 
+          trim : false
           limit: -1
         }
       }
 
-   
+
       ## Remove temporary and useless fields before sending it to the cluster
       {
         removeFields {
