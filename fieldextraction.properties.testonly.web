@@ -4,7 +4,7 @@
 # Here is an example of how this could be included from a local file while
 # still using the files hosted on the web (Similar can be done by checking
 # out the repo https://github.com/SecureOps/fieldextraction-rules locally)
-basepath=https://secureops.github.io/fieldextraction-rules
+basepath=https://secureops.github.io/fieldextraction-rules/versions/1.5
 morphlinepath=${basepath}/morphlines
 
 
