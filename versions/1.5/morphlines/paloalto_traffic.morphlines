@@ -14,7 +14,8 @@ morphlines : [
             SYSLOGPIDWITHDASH \[([0-9]+|-)\]
             SYSLOGPROGWITHDASH %{PROG}%{SYSLOGPIDWITHDASH}
             SYSLOGHDR (?:%{SYSLOGBINHDR})%{TIMESTAMP} %{SYSLOGHOST} %{SYSLOGPROGWITHDASH}:%{SPACE}
-            PALOALTO_TRAFFIC %{INT},%{DATA},%{DATA},(?:TRAFFIC),%{GREEDYDATA}
+            PANDATE %{YEAR}[/-]%{MONTHNUM}[/-]%{MONTHDAY} %{TIME}
+            PALOALTO_TRAFFIC %{INT},%{PANDATE},%{DATA},(?:TRAFFIC),%{DATA},%{DATA},%{PANDATE},%{GREEDYDATA}
           """
           expressions : {
             message : """.*%{PALOALTO_TRAFFIC:paloalto_traffic}"""
