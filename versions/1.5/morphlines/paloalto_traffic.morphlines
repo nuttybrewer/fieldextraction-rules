@@ -21,53 +21,63 @@ morphlines : [
           }
         }
       }
+      ### Remember that the Java "MorphlinesFieldExtractorItem" checks to see if there's an empty dictionary
+      ### So if we're setting values below, we should wrap this in an if statement
+      {
+        if {
+          conditions: [
+            { not { equals { paloalto_traffic: [] } } }
+          ]
+          then: [
+            ## Split CSV and set the field names according to Palo Alto documentation: https://live.paloaltonetworks.com/servlet/JiveServlet/downloadBody/2021-102-8-13361/PANOS-Syslog-Integration-TN-RevM.pdf
+            {
+              split {
+                inputField : paloalto_traffic
+                outputFields : [ FUTURE_USE0, receive_time_ts, serial_number, type, content_type, FUTURE_USE1, generated_time_ts, src_address_ip, dst_address_ip, src_nat_address_ip, dst_nat_address_ip, rule_name,src_user,dst_user,application,virtual_system,src_zone,dst_zone,inbound_if,outbound_if,log_action,FUTURE_USE2,sessionid_i,repeatcnt_i,src_port_i,dst_port_i,src_nat_port_i,dst_nat_port_i,flags_h,ip_protocol_name,action,bytes_total_i,bytes_total_sent_i,bytes_total_received_i,packets_total_i,start_ts,elapsed_sec_i,category,FUTURE_USE3,seqno_i,actionflags_h,src_location,dst_location,FUTURE_USE4,packets_sent_i,packets_received_i,session_end_reason,device_group_hierarchy_level_1_i,device_group_hierarchy_level_2_i,device_group_hierarchy_level_3_i,device_group_hierarchy_level_4_i,virtual_system_name,device_name,action_source,src_vm_uuid, dst_vm_uuid,tunnelid_i,monitor_tag,parent_session_id_i,parent_start_time_ts,tunnel_type ]
+                separator : ","
+                isRegex : false
+                addEmptyStrings : true
+                trim : false
+                limit: -1
+              }
+            }
 
-      ## Split CSV and set the field names according to Palo Alto documentation: https://live.paloaltonetworks.com/servlet/JiveServlet/downloadBody/2021-102-8-13361/PANOS-Syslog-Integration-TN-RevM.pdf
-      {
-        split {
-          inputField : paloalto_traffic
-          outputFields : [ FUTURE_USE0, receive_time_ts, serial_number, type, content_type, FUTURE_USE1, generated_time_ts, src_address_ip, dst_address_ip, src_nat_address_ip, dst_nat_address_ip, rule_name,src_user,dst_user,application,virtual_system,src_zone,dst_zone,inbound_if,outbound_if,log_action,FUTURE_USE2,sessionid_i,repeatcnt_i,src_port_i,dst_port_i,src_nat_port_i,dst_nat_port_i,flags_h,ip_protocol_name,action,bytes_total_i,bytes_total_sent_i,bytes_total_received_i,packets_total_i,start_ts,elapsed_sec_i,category,FUTURE_USE3,seqno_i,actionflags_h,src_location,dst_location,FUTURE_USE4,packets_sent_i,packets_received_i,session_end_reason,device_group_hierarchy_level_1_i,device_group_hierarchy_level_2_i,device_group_hierarchy_level_3_i,device_group_hierarchy_level_4_i,virtual_system_name,device_name,action_source,src_vm_uuid, dst_vm_uuid,tunnelid_i,monitor_tag,parent_session_id_i,parent_start_time_ts,tunnel_type ]
-          separator : ","
-          isRegex : false
-          addEmptyStrings : true
-          trim : false
-          limit: -1
-        }
-      }
-
-      ## Remove temporary and useless fields before sending it to the cluster
-      {
-        removeFields {
-          blacklist : ["literal:paloalto_traffic", "glob:FUTURE_USE*"]
-          # whitelist: []
-        }
-      }
-      {
-        addValuesIfAbsent {
-          receive_timestamp_ts: "@{receive_time_ts}"
-        }
-      }
-      ## Prep the CEF formatted for the receive_timestamp_ts
-      {
-        convertTimestamp {
-          field: receive_timestamp_ts
-          inputFormats: ["yyyy/MM/dd HH:mm:ss"]
-          outputFormat: "unixTimeInMillis"
-        }
-      }
-      ## Produce the LEEF format required by IBM QRadar
-      ## See page 836 of http://public.dhe.ibm.com/software/security/products/qradar/documents/iTeam_addendum/b_dsm_guide.pdf
-      {
-        addValuesIfAbsent {
-          LEEF: "LEEF:1.0|Palo Alto Networks|PAN-OS Syslog Integration|8.0|@{action}|cat=@{type}|ReceiveTime=@{receive_time_ts}|SerialNumber=@{serial_number}|Type=@{type}|Subtype=@{content_type}|devTime=@{receive_timestamp_ts}|src=@{src_address_ip}|dst=@{dst_address_ip}|srcPostNAT=@{src_nat_address_ip}|dstPostNAT=@{dst_nat_address_ip}|RuleName=@{rule_name}|usrName=@{src_user}|SourceUser=@{src_user}|DestinationUser=@{dst_user}|Application=@{application}|VirtualSystem=@{virtual_system}|SourceZone=@{src_zone}|DestinationZone=@{dst_zone}|IngressInterface=@{inbound_if}|EgressInterface=@{outbound_if}|LogForwardingProfile=@{log_action}|SessionID=@{sessionid_i}|RepeatCount=@{repeatcnt_i}|srcPort=@{src_port_i}|dstPort=@{dst_port_i}|srcPostNATPort=@{src_nat_port_i}|dstPostNATPort=@{dst_nat_port_i}|Flags=@{flags_h}|proto=@{ip_protocol_name}|action=@{action}|totalBytes=@{bytes_total_i}|dstBytes=@{bytes_total_received_i}|srcBytes=@{bytes_total_sent_i}|totalPackets=@{packets_total_i}|StartTime=@{start_ts}|ElapsedTime=@{elapsed_sec_i}|URLCategory=@{category}|sequence=@{seqno_i}|ActionFlags=@{actionflags_h}|SourceLocation=@{src_location}|DestinationLocation=@{dst_location}|dstPackets=@{packets_received_i}|srcPackets=@{packets_sent_i}|SessionEndReason=@{session_end_reason}|DeviceGroupHierarchyL1=@{device_group_hierarchy_level_1_i}|DeviceGroupHierarchyL2=@{device_group_hierarchy_level_2_i}|DeviceGroupHierarchyL3=@{device_group_hierarchy_level_3_i}|DeviceGroupHierarchyL4=@{device_group_hierarchy_level_4_i}|vSrcName=@{virtual_system_name}|DeviceName=@{device_name}|ActionSource=@{action_source}|SrcUUID=@{src_vm_uuid}|DstUUID=@{dst_vm_uuid}|TunnelID=@{tunnelid_i}|MonitorTag=@{monitor_tag}|ParentSessionID=@{parent_session_id_i}|ParentStartTime=@{parent_start_time_ts}|TunnelType=@{tunnel_type}"
-        }
-      }
-      ## Add the Headers to set vendor and subtype
-      {
-        setValues {
-          HEADER_vendor: "Palo Alto Networks"
-          HEADER_devicetype: "Firewall"
-          HEADER_devicemodel: "PA Series"
+            ## Remove temporary and useless fields before sending it to the cluster
+            {
+              removeFields {
+                blacklist : ["literal:paloalto_traffic", "glob:FUTURE_USE*"]
+                # whitelist: []
+              }
+            }
+            {
+              addValuesIfAbsent {
+                receive_timestamp_ts: "@{receive_time_ts}"
+              }
+            }
+            ## Prep the CEF formatted for the receive_timestamp_ts
+            {
+              convertTimestamp {
+                field: receive_timestamp_ts
+                inputFormats: ["yyyy/MM/dd HH:mm:ss"]
+                outputFormat: "unixTimeInMillis"
+              }
+            }
+            ## Produce the LEEF format required by IBM QRadar
+            ## See page 836 of http://public.dhe.ibm.com/software/security/products/qradar/documents/iTeam_addendum/b_dsm_guide.pdf
+            {
+              addValuesIfAbsent {
+                LEEF: "LEEF:1.0|Palo Alto Networks|PAN-OS Syslog Integration|8.0|@{action}|cat=@{type}|ReceiveTime=@{receive_time_ts}|SerialNumber=@{serial_number}|Type=@{type}|Subtype=@{content_type}|devTime=@{receive_timestamp_ts}|src=@{src_address_ip}|dst=@{dst_address_ip}|srcPostNAT=@{src_nat_address_ip}|dstPostNAT=@{dst_nat_address_ip}|RuleName=@{rule_name}|usrName=@{src_user}|SourceUser=@{src_user}|DestinationUser=@{dst_user}|Application=@{application}|VirtualSystem=@{virtual_system}|SourceZone=@{src_zone}|DestinationZone=@{dst_zone}|IngressInterface=@{inbound_if}|EgressInterface=@{outbound_if}|LogForwardingProfile=@{log_action}|SessionID=@{sessionid_i}|RepeatCount=@{repeatcnt_i}|srcPort=@{src_port_i}|dstPort=@{dst_port_i}|srcPostNATPort=@{src_nat_port_i}|dstPostNATPort=@{dst_nat_port_i}|Flags=@{flags_h}|proto=@{ip_protocol_name}|action=@{action}|totalBytes=@{bytes_total_i}|dstBytes=@{bytes_total_received_i}|srcBytes=@{bytes_total_sent_i}|totalPackets=@{packets_total_i}|StartTime=@{start_ts}|ElapsedTime=@{elapsed_sec_i}|URLCategory=@{category}|sequence=@{seqno_i}|ActionFlags=@{actionflags_h}|SourceLocation=@{src_location}|DestinationLocation=@{dst_location}|dstPackets=@{packets_received_i}|srcPackets=@{packets_sent_i}|SessionEndReason=@{session_end_reason}|DeviceGroupHierarchyL1=@{device_group_hierarchy_level_1_i}|DeviceGroupHierarchyL2=@{device_group_hierarchy_level_2_i}|DeviceGroupHierarchyL3=@{device_group_hierarchy_level_3_i}|DeviceGroupHierarchyL4=@{device_group_hierarchy_level_4_i}|vSrcName=@{virtual_system_name}|DeviceName=@{device_name}|ActionSource=@{action_source}|SrcUUID=@{src_vm_uuid}|DstUUID=@{dst_vm_uuid}|TunnelID=@{tunnelid_i}|MonitorTag=@{monitor_tag}|ParentSessionID=@{parent_session_id_i}|ParentStartTime=@{parent_start_time_ts}|TunnelType=@{tunnel_type}"
+              }
+            }
+            ## Add the Headers to set vendor and subtype
+            {
+              setValues {
+                HEADER_vendor: "Palo Alto Networks"
+                HEADER_devicetype: "Firewall"
+                HEADER_devicemodel: "PA Series"
+              }
+            }
+          ]
         }
       }
     ]
