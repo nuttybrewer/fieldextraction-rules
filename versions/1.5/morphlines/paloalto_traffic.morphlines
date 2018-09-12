@@ -29,7 +29,7 @@ morphlines : [
             { not { equals { paloalto_traffic: [] } } }
           ]
           then: [
-            ## Split CSV and set the field names according to Palo Alto documentation: https://live.paloaltonetworks.com/servlet/JiveServlet/downloadBody/2021-102-8-13361/PANOS-Syslog-Integration-TN-RevM.pdf
+            ## Split CSV and set the field names according to Palo Alto documentation: https://www.paloaltonetworks.com/documentation/81/pan-os/pan-os/monitoring/use-syslog-for-monitoring/syslog-field-descriptions/traffic-log-fields
             {
               split {
                 inputField : paloalto_traffic

@@ -19,7 +19,7 @@ morphlines : [
             PALOALTO_THREAT %{DATA},%{DATA},(?:THREAT),%{GREEDYDATA}
           """
           expressions : {
-            message : """^(?:%{SYSLOGHDR})(?:%{INT},)?%{PALOALTO_THREAT:paloalto_threat}"""
+            message : """.*%{PALOALTO_THREAT:paloalto_threat}"""
           }
         }
       }
@@ -45,7 +45,7 @@ morphlines : [
           # whitelist: []
         }
       }
-      
+
       ## Add the Headers to set vendor and subtype
       {
         setValues {
