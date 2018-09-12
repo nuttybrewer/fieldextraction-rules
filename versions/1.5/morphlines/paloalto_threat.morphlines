@@ -11,24 +11,20 @@ morphlines : [
         grok {
           dictionaryResources : [ "grokpatterns/grok-patterns" ]
           dictionaryString:  """
-            TIMESTAMP (?:%{TIMESTAMP_ISO8601}|%{SYSLOGTIMESTAMP})
-            SYSLOGBINHDR <[0-9]+>
-            SYSLOGPIDWITHDASH \[([0-9]+|-)\]
-            SYSLOGPROGWITHDASH %{PROG}%{SYSLOGPIDWITHDASH}
-            SYSLOGHDR (?:%{SYSLOGBINHDR})%{TIMESTAMP} %{SYSLOGHOST} %{SYSLOGPROGWITHDASH}:%{SPACE}
-            PALOALTO_THREAT %{DATA},%{DATA},(?:THREAT),%{GREEDYDATA}
+            PANDATE %{YEAR}[/-]%{MONTHNUM}[/-]%{MONTHDAY} %{TIME}
+            PALOALTO_THREAT %{INT},%{PANDATE},%{DATA},(?:THREAT),%{DATA},%{DATA},%{PANDATE},%{GREEDYDATA}
           """
           expressions : {
             message : """.*%{PALOALTO_THREAT:paloalto_threat}"""
           }
         }
       }
-
-      ## Split CSV and set the field names according to Palo Alto documentation: https://live.paloaltonetworks.com/servlet/JiveServlet/downloadBody/2021-102-8-13361/PANOS-Syslog-Integration-TN-RevM.pdf
+      ### Documented here: https://www.paloaltonetworks.com/documentation/81/pan-os/pan-os/monitoring/use-syslog-for-monitoring/syslog-field-descriptions/threat-log-fields
+      ## Split CSV and set the field
       {
         split {
           inputField : paloalto_threat
-          outputFields : [ receive_time_ts, serial, type, subtype, FUTURE_USE1, time_generated_ts,src,dst,natsrc,natdst,rule,srcuser,dstuser,app,vsys,from,to,inbound_if,outbound_if,logset,FUTURE_USE2,sessionid,repeatcnt_i,src_port,dst_port,natsrc_port,natdst_port,flags,protocol,action, misc, threatid, threat_category, threat_severity, direction, seqno_i, actionflags, srcloc, dstloc, FUTURE_USE3, subtype ]
+          outputFields : [ FUTURE_USE0,receive_time_ts, serial, type, subtype, FUTURE_USE1, time_generated_ts,src,dst,natsrc,natdst,rule,srcuser,dstuser,app,vsys,from,to,inbound_if,outbound_if,logset,FUTURE_USE2,sessionid,repeatcnt_i,src_port,dst_port,natsrc_port,natdst_port,flags,protocol,action, misc, threatid, threat_category, threat_severity, direction, seqno_i, actionflags, srcloc, dstloc, FUTURE_USE3, subtype ]
           separator : ","
           isRegex : false
           addEmptyStrings : true
