@@ -1,0 +1,40 @@
+morphlines : [ 
+  {
+    id : leef
+    importCommands : ["org.kitesdk.**"]
+    commands : [
+      
+      # split key value pair string on blanks into an array of key value pairs
+      {
+        split {
+          inputField : message
+          outputField : key_value_array
+          separator : "|"
+        }
+      }
+      # split each key value pair on '=' char and extract its value into record fields named after the key
+      {
+        splitKeyValue {
+          inputField : key_value_array
+          outputFieldPrefix : ""
+          separator : "="
+          addEmptyStrings : false
+          trim : true
+        }
+      }
+      {
+        removeFields {
+          blacklist: ["literal:key_value_array"]
+        }
+      }
+      ## Add the Headers to set vendor and subtype
+      {
+        setValues {
+          HEADER_vendor: "IBM"
+          HEADER_devicetype: "SOME TYPE HERE"
+          HEADER_devicemodel: "SOME MODEL HERE"
+        }
+      }
+    ]
+  }
+]
